@@ -15,7 +15,7 @@ steps:
         git config --global user.name "Cloud Build Bot"
         echo "✅ Git configured globally."
 
-
+  
   - id: 'TestWriterAgent'
     name: 'gcr.io/$PROJECT_ID/gemini-cli-node20:latest'
     secretEnv: ['GEMINI_API_KEY', 'GITHUB_PAT']
@@ -30,9 +30,9 @@ steps:
   
         # Agent-specific variables
         AGENT_NAME="TestWriterAgent"
-        BRANCH_NAME="$${AGENT_NAME}-${BUILD_ID}"
+        BRANCH_NAME="$${AGENT_NAME}-${SHORT_SHA}"
         SUMMARY_FILE="$${AGENT_NAME}-changes.md"
-        COMMIT_MSG="[gcb-gem] #testwriter: Add automated Python tests from $${AGENT_NAME} for ${_DIRECTORY}"
+        COMMIT_MSG="test(ai): Add automated Python tests from $${AGENT_NAME} for ${_DIRECTORY}"
   
         # Create a fresh branch from the original commit
         git checkout "$COMMIT_SHA"
@@ -44,17 +44,20 @@ steps:
         1. Explore the Python files in the '${_DIRECTORY}' subdirectory.
         2. Identify code that lacks adequate unit test coverage.
         3. Write new, high-quality unit tests using the 'pytest' framework.
-        4. Run the new tests to ensure they pass.
-        5. Create a new file named '$${SUMMARY_FILE}' to summarize the new tests you have added.
+        4. Create a new file named '$${SUMMARY_FILE}' to summarize the new tests you have added.
   
         IMPORTANT:
         - Only add new tests; **do not modify the existing source code.**
-        - Only commit tests that pass successfully.
+        - You cannot run the tests yourself, but write them so they are ready to be run by the CI system.
         - Once the summary file is created, your task is complete. Do not perform any other actions." \
               --model=${_MODEL} \
               --approval-mode=yolo
   
-        # Install dependencies and run tests
+        # CHANGE: Create and activate a Python virtual environment to avoid OS conflicts.
+        python3 -m venv .venv
+        source .venv/bin/activate
+        
+        # CHANGE: Install dependencies and run tests within the isolated environment.
         pip install -e .[test]
         pytest "${_DIRECTORY}"
   
@@ -72,7 +75,7 @@ steps:
           # Create the Pull Request
           gh pr create \
             --repo "${_GITHUB_REPO_OWNER}/${_GITHUB_REPO_NAME}" \
-            --base "{$_BASE_BRANCH}" \
+            --base "ed-multiagent" \
             --head "$${BRANCH_NAME}" \
             --title "$${COMMIT_MSG}" \
             --body "$${SUMMARY_BODY}"
@@ -314,7 +317,7 @@ steps:
 # --- Configuration ---
 options:
   diskSizeGb: '300'
-#   machineType: 'E2_HIGHCPU_32'
+  machineType: 'E2_HIGHCPU_32'
 
 # Secrets to make available as environment variables for all steps.
 availableSecrets:
@@ -327,7 +330,7 @@ availableSecrets:
 # User-defined substitutions to pass variables into the build.
 substitutions:
   # Pick model from https://ai.google.dev/gemini-api/docs/models
-  _MODEL: 'gemini-2.5-flash' #'gemini-1.5-pro-latest' # alternatives: gemini-2.5-pro, gemini-2.5-flash
+  _MODEL: 'gemini-2.5-flash' #'gemini-1.5-pro-latest', gemini-2.5-pro, gemini-2.5-flash, gemini-2.0-flash
   _SECRET_NAME_GEMINI: 'ed-gemini-argo-local-edrienne-key'
   _SECRET_NAME_GITHUB: 'ed-flask-github-pat'
   _GITHUB_REPO_OWNER: 'codrienne'
