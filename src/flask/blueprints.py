@@ -123,6 +123,8 @@ class Blueprint(SansioBlueprint):
         path = os.path.join(self.root_path, resource)
 
         if mode == "rb":
-            return open(path, mode)  # pyright: ignore
+            with open(path, mode) as f:
+                return f.read()
 
-        return open(path, mode, encoding=encoding)
+        with open(path, mode, encoding=encoding) as f:
+            return f.read()

@@ -1125,3 +1125,10 @@ def test_blueprint_renaming(app, client) -> None:
     assert client.get("/b/a/").data == b"alt.sub.index2"
     assert client.get("/a/error").data == b"Error"
     assert client.get("/b/error").data == b"Error"
+
+def test_open_resource(app):
+    bp = flask.Blueprint("bp", __name__, static_folder="static")
+    app.register_blueprint(bp)
+    f = bp.open_resource("index.html")
+    assert "<h1>Hello World!</h1>" in str(f)
+    assert f.closed

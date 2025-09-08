@@ -113,7 +113,7 @@ class Flask(App):
         you should create it with one of the two versions below::
 
             app = Flask('yourapplication')
-            app = Flask(__name__.split('.')[0])
+            app = Flask(__name__.split(".")[0])
 
         Why is that?  The application will work even with `__name__`, thanks
         to how resources are looked up.  However it will make debugging more
@@ -200,7 +200,7 @@ class Flask(App):
             "MAX_FORM_PARTS": 1_000,
             "SEND_FILE_MAX_AGE_DEFAULT": None,
             "TRAP_BAD_REQUEST_ERRORS": None,
-            "TRAP_HTTP_EXCEPTIONS": False,
+            "TRAP_HTTP_EXCEPTions": False,
             "EXPLAIN_TEMPLATE_LOADING": False,
             "PREFERRED_URL_SCHEME": "http",
             "TEMPLATES_AUTO_RELOAD": None,
@@ -219,7 +219,7 @@ class Flask(App):
 
     #: the session interface to use.  By default an instance of
     #: :class:`~flask.sessions.SecureCookieSessionInterface` is used here.
-    #:
+    #: 
     #: .. versionadded:: 0.8
     session_interface: SessionInterface = SecureCookieSessionInterface()
 
@@ -328,7 +328,10 @@ class Flask(App):
         )
 
     def open_resource(
-        self, resource: str, mode: str = "rb", encoding: str | None = None
+        self,
+        resource: str,
+        mode: str = "rb",
+        encoding: str | None = None,
     ) -> t.IO[t.AnyStr]:
         """Open a resource file relative to :attr:`root_path` for reading.
 
@@ -356,12 +359,15 @@ class Flask(App):
         path = os.path.join(self.root_path, resource)
 
         if mode == "rb":
-            return open(path, mode)  # pyright: ignore
+            return open(path, mode)
 
         return open(path, mode, encoding=encoding)
 
     def open_instance_resource(
-        self, resource: str, mode: str = "rb", encoding: str | None = "utf-8"
+        self,
+        resource: str,
+        mode: str = "rb",
+        encoding: str | None = "utf-8",
     ) -> t.IO[t.AnyStr]:
         """Open a resource file relative to the application's instance folder
         :attr:`instance_path`. Unlike :meth:`open_resource`, files in the
@@ -574,7 +580,7 @@ class Flask(App):
            Flask will suppress any server error with a generic error page
            unless it is in debug mode.  As such to enable just the
            interactive debugger without the code reloading, you have to
-           invoke :meth:`run` with ``debug=True`` and ``use_reloader=False``.
+           invoke :meth:`run` with ``debug=True`` and ``use_reloader=False``. 
            Setting ``use_debugger`` to ``True`` without being in debug mode
            won't catch any exceptions because there won't be any to
            catch.
@@ -660,6 +666,8 @@ class Flask(App):
 
         try:
             run_simple(t.cast(str, host), port, self, **options)
+        except OSError as e:
+            print(f"Failed to start server: {e}")
         finally:
             # reset the first request information if the development server
             # reset normally.  This makes it possible to restart the server
@@ -720,7 +728,7 @@ class Flask(App):
         cls = self.test_client_class
         if cls is None:
             from .testing import FlaskClient as cls
-        return cls(  # type: ignore
+        return cls(
             self, self.response_class, use_cookies=use_cookies, **kwargs
         )
 
@@ -742,7 +750,8 @@ class Flask(App):
         return cls(self, **kwargs)  # type: ignore
 
     def handle_http_exception(
-        self, e: HTTPException
+        self,
+        e: HTTPException,
     ) -> HTTPException | ft.ResponseReturnValue:
         """Handles an HTTP exception.  By default this will invoke the
         registered error handlers and fall back to returning the
@@ -777,7 +786,8 @@ class Flask(App):
         return self.ensure_sync(handler)(e)  # type: ignore[no-any-return]
 
     def handle_user_exception(
-        self, e: Exception
+        self,
+        e: Exception,
     ) -> HTTPException | ft.ResponseReturnValue:
         """This method is called whenever an exception occurs that
         should be handled. A special case is :class:`~werkzeug
@@ -978,7 +988,8 @@ class Flask(App):
         return func
 
     def async_to_sync(
-        self, func: t.Callable[..., t.Coroutine[t.Any, t.Any, t.Any]]
+        self,
+        func: t.Callable[..., t.Coroutine[t.Any, t.Any, t.Any]],
     ) -> t.Callable[..., t.Any]:
         """Return a sync function that will run the coroutine function.
 
@@ -1107,7 +1118,7 @@ class Flask(App):
         self.inject_url_defaults(endpoint, values)
 
         try:
-            rv = url_adapter.build(  # type: ignore[union-attr]
+            rv = url_adapter.build(
                 endpoint,
                 values,
                 method=_method,
@@ -1393,7 +1404,7 @@ class Flask(App):
         when handling a request, and when running a CLI command. Use
         this to manually create a context outside of these situations.
 
-        ::
+        :: 
 
             with app.app_context():
                 init_db()
@@ -1406,8 +1417,7 @@ class Flask(App):
 
     def request_context(self, environ: WSGIEnvironment) -> RequestContext:
         """Create a :class:`~flask.ctx.RequestContext` representing a
-        WSGI environment. Use a ``with`` block to push the context,
-        which will make :data:`request` point at this request.
+        WSGI environment. Use a ``with`` block to push the context, which will make :data:`request` point at this request.
 
         See :doc:`/reqcontext`.
 
@@ -1477,7 +1487,9 @@ class Flask(App):
             builder.close()
 
     def wsgi_app(
-        self, environ: WSGIEnvironment, start_response: StartResponse
+        self,
+        environ: WSGIEnvironment,
+        start_response: StartResponse,
     ) -> cabc.Iterable[bytes]:
         """The actual WSGI application. This is not implemented in
         :meth:`__call__` so that middlewares can be applied without
@@ -1527,7 +1539,9 @@ class Flask(App):
             ctx.pop(error)
 
     def __call__(
-        self, environ: WSGIEnvironment, start_response: StartResponse
+        self,
+        environ: WSGIEnvironment,
+        start_response: StartResponse,
     ) -> cabc.Iterable[bytes]:
         """The WSGI server calls the Flask application object as the
         WSGI application. This calls :meth:`wsgi_app`, which can be

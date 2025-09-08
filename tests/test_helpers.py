@@ -362,8 +362,9 @@ class TestHelpers:
 def test_open_resource(mode):
     app = flask.Flask(__name__)
 
-    with app.open_resource("static/index.html", mode) as f:
-        assert "<h1>Hello World!</h1>" in str(f.read())
+    f = app.open_resource("static/index.html", mode)
+    assert "<h1>Hello World!</h1>" in str(f.read())
+    assert f.closed
 
 
 @pytest.mark.parametrize("mode", ("w", "x", "a", "r+"))
@@ -381,3 +382,16 @@ def test_open_resource_with_encoding(tmp_path, encoding):
 
     with app.open_resource("test", mode="rt", encoding=encoding) as f:
         assert f.read() == "test"
+
+@pytest.mark.parametrize("mode", ("r", "rb", "rt", "w", "wb", "wt"))
+def test_open_instance_resource(mode):
+    app = flask.Flask(__name__)
+    app.instance_path = os.path.join(os.path.dirname(__file__), "test_apps")
+
+    with app.open_instance_resource("hello.txt", mode) as f:
+        if "r" in mode:
+            assert "Hello" in str(f.read())
+        else:
+            f.write("Hello")
+
+    os.remove(os.path.join(app.instance_path, "hello.txt"))
