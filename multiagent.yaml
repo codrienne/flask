@@ -1,6 +1,7 @@
 # This Cloud Build file deploys 4 parallel AI agents to work on your codebase.
 # Each agent uses an isolated git worktree and a carefully crafted prompt
 # to securely analyze a specific subdirectory.
+# Commiting a change to trigger the build.
 
 steps:
   # --- Step 1: Configure Git for all subsequent steps ---
