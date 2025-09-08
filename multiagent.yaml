@@ -156,7 +156,7 @@ steps:
         Your task is to improve code quality in the '${_DIRECTORY}' subdirectory.
 
         Instructions:
-        1. Do not ask for permission; act immediately.
+        1. Do not ask for permission; act immediately. Assume yes for all my answers.
         2. All file paths you use must be relative to the project root. Do not use absolute paths.
         3. Start with 'ls -R ${_DIRECTORY}' to explore files.
         4. Apply these improvements:
