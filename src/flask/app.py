@@ -631,6 +631,28 @@ class Flask(App):
         if debug is not None:
             self.debug = bool(debug)
 
+        host, port = self._get_run_params(host, port)
+
+        options.setdefault("use_reloader", self.debug)
+        options.setdefault("use_debugger", self.debug)
+        options.setdefault("threaded", True)
+
+        self._show_server_banner()
+
+        from werkzeug.serving import run_simple
+
+        try:
+            run_simple(t.cast(str, host), port, self, **options)
+        finally:
+            # reset the first request information if the development server
+            # reset normally.  This makes it possible to restart the server
+            # without reloader and that stuff from an interactive shell.
+            self._got_first_request = False
+
+    def _show_server_banner(self) -> None:
+        cli.show_server_banner(self.debug, self.name)
+
+    def _get_run_params(self, host: str | None, port: int | None) -> tuple[str, int]:
         server_name = self.config.get("SERVER_NAME")
         sn_host = sn_port = None
 
@@ -649,22 +671,7 @@ class Flask(App):
             port = int(sn_port)
         else:
             port = 5000
-
-        options.setdefault("use_reloader", self.debug)
-        options.setdefault("use_debugger", self.debug)
-        options.setdefault("threaded", True)
-
-        cli.show_server_banner(self.debug, self.name)
-
-        from werkzeug.serving import run_simple
-
-        try:
-            run_simple(t.cast(str, host), port, self, **options)
-        finally:
-            # reset the first request information if the development server
-            # reset normally.  This makes it possible to restart the server
-            # without reloader and that stuff from an interactive shell.
-            self._got_first_request = False
+        return host, port
 
     def test_client(self, use_cookies: bool = True, **kwargs: t.Any) -> FlaskClient:
         """Creates a test client for this application.  For information
@@ -698,7 +705,7 @@ class Flask(App):
             class CustomClient(FlaskClient):
                 def __init__(self, *args, **kwargs):
                     self._authentication = kwargs.pop("authentication")
-                    super(CustomClient,self).__init__( *args, **kwargs)
+                    super().__init__(*args, **kwargs)
 
             app.test_client_class = CustomClient
             client = app.test_client(authentication='Basic ....')
