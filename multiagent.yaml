@@ -1,4 +1,4 @@
-# This Cloud Build file deploys 5 parallel AI agents to work on your codebase.
+# This Cloud Build file deploys 4 parallel AI agents to work on your codebase.
 # Each agent uses an isolated git worktree and a carefully crafted prompt
 # to securely analyze a specific subdirectory.
 
@@ -261,7 +261,7 @@ availableSecrets:
 
 # User-defined substitutions to pass variables into the build.
 substitutions:
-  _MODEL: 'gemini-2.5-pro' # 'gemini-1.5-flash-latest'
+  _MODEL: 'gemini-1.5-pro' #'gemini-2.5-pro' # 'gemini-1.5-flash-latest'
   _SECRET_NAME_GEMINI: 'ed-gemini-argo-local-edrienne-key'
   _SECRET_NAME_GITHUB: 'ed-flask-github-pat'
   _GITHUB_REPO_OWNER: 'codrienne'
