@@ -15,6 +15,71 @@ steps:
         git config --global user.name "Cloud Build Bot"
         echo "✅ Git configured globally."
 
+
+- id: 'TestWriterAgent'
+  name: 'gcr.io/$PROJECT_ID/gemini-cli-node20:latest'
+  secretEnv: ['GEMINI_API_KEY', 'GITHUB_PAT']
+  entrypoint: 'bash'
+  args:
+    - '-c'
+    - |
+      set -ex
+      # Configure GitHub CLI
+      echo "$$GITHUB_PAT" | gh auth login --with-token --hostname github.com
+      gh config set git_protocol https
+
+      # Agent-specific variables
+      AGENT_NAME="TestWriterAgent"
+      BRANCH_NAME="$${AGENT_NAME}-${BUILD_ID}"
+      SUMMARY_FILE="$${AGENT_NAME}-changes.md"
+      COMMIT_MSG="[gcb-gem] #testwriter: Add automated Python tests from $${AGENT_NAME} for ${_DIRECTORY}"
+
+      # Create a fresh branch from the original commit
+      git checkout "$COMMIT_SHA"
+      git checkout -b "$${BRANCH_NAME}"
+
+      # Run the AI agent
+      gemini --debug --prompt "You are an autonomous senior software engineer specializing in Python testing. Your working directory is the project root.
+      Your plan is:
+      1. Explore the Python files in the '${_DIRECTORY}' subdirectory.
+      2. Identify code that lacks adequate unit test coverage.
+      3. Write new, high-quality unit tests using the 'pytest' framework.
+      4. Run the new tests to ensure they pass.
+      5. Create a new file named '$${SUMMARY_FILE}' to summarize the new tests you have added.
+
+      IMPORTANT:
+      - Only add new tests; **do not modify the existing source code.**
+      - Only commit tests that pass successfully.
+      - Once the summary file is created, your task is complete. Do not perform any other actions." \
+            --model=${_MODEL} \
+            --approval-mode=yolo
+
+      # Install dependencies and run tests
+      pip install -e .[test]
+      pytest "${_DIRECTORY}"
+
+      # Check for new test files and create a PR if needed
+      if [[ -n "$(git status --porcelain)" ]]; then
+        SUMMARY_BODY="Automated changes by $${AGENT_NAME}."
+        if [[ -f "$${SUMMARY_FILE}" ]]; then
+            SUMMARY_BODY=$(cat "$${SUMMARY_FILE}")
+        fi
+        git add .
+        git reset HEAD "$${SUMMARY_FILE}" # Unstage the summary file
+        git commit -m "$${COMMIT_MSG}"
+        git push https://$$GITHUB_PAT@github.com/${_GITHUB_REPO_OWNER}/${_GITHUB_REPO_NAME}.git "$${BRANCH_NAME}"
+
+        # Create the Pull Request
+        gh pr create \
+          --repo "${_GITHUB_REPO_OWNER}/${_GITHUB_REPO_NAME}" \
+          --base "{$_BASE_BRANCH}" \
+          --head "$${BRANCH_NAME}" \
+          --title "$${COMMIT_MSG}" \
+          --body "$${SUMMARY_BODY}"
+      else
+        echo "$${AGENT_NAME} did not add any new tests in ${_DIRECTORY}."
+      fi
+
   - id: 'BugHunterAgent'
     name: 'gcr.io/$PROJECT_ID/gemini-cli-node20:latest'
     secretEnv: ['GEMINI_API_KEY', 'GITHUB_PAT']
@@ -31,7 +96,7 @@ steps:
         AGENT_NAME="BugHunterAgent"
         BRANCH_NAME="$${AGENT_NAME}-${SHORT_SHA}"
         SUMMARY_FILE="$${AGENT_NAME}-changes.md"
-        COMMIT_MSG="fix(ai): Automated bug fixes from $${AGENT_NAME} in ${_DIRECTORY}"
+        COMMIT_MSG="[gcb-gem] #bugfix: Automated bug fixes from $${AGENT_NAME} in ${_DIRECTORY}"
 
         # Create a fresh branch from the original commit
         git checkout "$COMMIT_SHA"
@@ -88,22 +153,21 @@ steps:
         AGENT_NAME="DocWriterAgent"
         BRANCH_NAME="$${AGENT_NAME}-${SHORT_SHA}"
         SUMMARY_FILE="$${AGENT_NAME}-changes.md"
-        COMMIT_MSG="docs(ai): Automated documentation updates from $${AGENT_NAME} in ${_DIRECTORY}"
+        COMMIT_MSG="[gcb-gem] #docs: Automated documentation updates from $${AGENT_NAME} in ${_DIRECTORY}"
 
         # Create a fresh branch from the original commit
         git checkout "$COMMIT_SHA"
         git checkout -b "$${BRANCH_NAME}"
 
         # Run the AI agent
-        gemini --debug --prompt "You are an autonomous technical writer agent in the /workspace directory.
-        Your task is to improve documentation in the '${_DIRECTORY}' subdirectory.
-
-        Instructions:
-        1. Do not ask for permission; act immediately.
-        2. All file paths must be relative; do not use '..'.
-        3. Start with 'ls -R ${_DIRECTORY}' to find files.
-        4. Locate 'README.md'. If it exists, update it with purpose and examples. If not, create it.
-        5. If you modify any documentation, summarize your changes in '$${SUMMARY_FILE}'. If no changes are made, do not create this file." \
+        gemini --debug --prompt "You are an autonomous technical writer agent. Your working directory is the project root.
+        Your plan is:
+        1. Explore the files in the '${_DIRECTORY}' subdirectory.
+        2. Find the 'README.md' file. If it doesn't exist, create it.
+        3. Update the 'README.md' to be high-quality, explaining the code's purpose with clear usage examples.
+        4. Create a new file named '$${SUMMARY_FILE}' that briefly summarizes the documentation changes you made.
+        
+        IMPORTANT: Once you have created the summary file, your task is finished. **Do not delete or revert any files.** Your final output should be a single sentence confirming the task is complete, and nothing more." \
               --model=${_MODEL} \
               --approval-mode=yolo
 
@@ -145,7 +209,7 @@ steps:
         AGENT_NAME="CodeQualityAgent"
         BRANCH_NAME="$${AGENT_NAME}-${SHORT_SHA}"
         SUMMARY_FILE="$${AGENT_NAME}-changes.md"
-        COMMIT_MSG="refactor(ai): Apply automated code quality improvements in ${_DIRECTORY}"
+        COMMIT_MSG="[gcb-gem] #codequality: Apply automated code quality improvements in ${_DIRECTORY}"
 
         # Create a fresh branch from the original commit
         git checkout "$COMMIT_SHA"
@@ -205,7 +269,7 @@ steps:
         AGENT_NAME="SecurityAgent"
         BRANCH_NAME="$${AGENT_NAME}-${SHORT_SHA}"
         SUMMARY_FILE="$${AGENT_NAME}-changes.md"
-        COMMIT_MSG="security(ai): Automated security fixes from $${AGENT_NAME} in ${_DIRECTORY}"
+        COMMIT_MSG="[gcb-gem] #security: Automated security fixes from $${AGENT_NAME} in ${_DIRECTORY}"
 
         # Create a fresh branch from the original commit
         git checkout "$COMMIT_SHA"
@@ -248,8 +312,8 @@ steps:
         fi
 
 # --- Configuration ---
-# options:
-#   diskSizeGb: '300'
+options:
+  diskSizeGb: '300'
 #   machineType: 'E2_HIGHCPU_32'
 
 # Secrets to make available as environment variables for all steps.
