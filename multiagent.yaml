@@ -33,7 +33,7 @@ steps:
         BRANCH_NAME="$${AGENT_NAME}-${BUILD_ID}"
         WORKTREE_PATH="/workspace/$${BRANCH_NAME}"
         SUMMARY_FILE="$${AGENT_NAME}-changes.md"
-        COMMIT_MSG="fix(ai): Automated bug fixes from $${AGENT_NAME} in ${_DIRECTORY}"
+        COMMIT_MSG="fix(gcb-gem): Automated bug fixes from $${AGENT_NAME} in ${_DIRECTORY}"
 
         # Setup git worktree
         git worktree add -b "$${BRANCH_NAME}" "$${WORKTREE_PATH}"
@@ -89,7 +89,7 @@ steps:
         BRANCH_NAME="$${AGENT_NAME}-${BUILD_ID}"
         WORKTREE_PATH="/workspace/$${BRANCH_NAME}"
         SUMMARY_FILE="$${AGENT_NAME}-changes.md"
-        COMMIT_MSG="docs(ai): Automated documentation updates from $${AGENT_NAME} in ${_DIRECTORY}"
+        COMMIT_MSG="docs(gcb-gem): Automated documentation updates from $${AGENT_NAME} in ${_DIRECTORY}"
 
         # Setup git worktree
         git worktree add -b "$${BRANCH_NAME}" "$${WORKTREE_PATH}"
@@ -145,7 +145,7 @@ steps:
         BRANCH_NAME="$${AGENT_NAME}-${BUILD_ID}"
         WORKTREE_PATH="/workspace/$${BRANCH_NAME}"
         SUMMARY_FILE="$${AGENT_NAME}-changes.md"
-        COMMIT_MSG="refactor(ai): Apply automated code quality improvements in ${_DIRECTORY}"
+        COMMIT_MSG="refactor(gcb-gem): Apply automated code quality improvements in ${_DIRECTORY}"
 
         # Setup git worktree
         git worktree add -b "$${BRANCH_NAME}" "$${WORKTREE_PATH}"
@@ -204,7 +204,7 @@ steps:
         BRANCH_NAME="$${AGENT_NAME}-${BUILD_ID}"
         WORKTREE_PATH="/workspace/$${BRANCH_NAME}"
         SUMMARY_FILE="$${AGENT_NAME}-changes.md"
-        COMMIT_MSG="security(ai): Automated security fixes from $${AGENT_NAME} in ${_DIRECTORY}"
+        COMMIT_MSG="security(gcb-gem): Automated security fixes from $${AGENT_NAME} in ${_DIRECTORY}"
 
         # Setup git worktree
         git worktree add -b "$${BRANCH_NAME}" "$${WORKTREE_PATH}"
