@@ -275,7 +275,8 @@ class Flask(App):
                 f"{self.static_url_path}/<path:filename>",
                 endpoint="static",
                 host=static_host,
-                view_func=lambda **kw: self_ref().send_static_file(**kw),  # type: ignore # noqa: B950
+                view_func=lambda **kw: self_ref().send_static_file(**kw),  # type: ignore
+            )
             )
 
     def get_send_file_max_age(self, filename: str | None) -> int | None:
@@ -873,7 +874,7 @@ class Flask(App):
         .. versionadded:: 0.8
         """
         self.logger.error(
-            f"Exception on {request.path} [{request.method}]", exc_info=exc_info
+            "Exception on %s [%s]", request.path, request.method, exc_info=exc_info
         )
 
     def dispatch_request(self) -> ft.ResponseReturnValue:
@@ -946,7 +947,7 @@ class Flask(App):
             if not from_error_handler:
                 raise
             self.logger.exception(
-                "Request finalizing failed with an error while handling an error"
+                "Request finalizing failed with an error while handling an error."
             )
         return response
 
@@ -1088,10 +1089,9 @@ class Flask(App):
 
             if url_adapter is None:
                 raise RuntimeError(
-                    "Unable to build URLs outside an active request"
-                    " without 'SERVER_NAME' configured. Also configure"
-                    " 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as"
-                    " needed."
+                    "Unable to build URLs outside an active request without"
+                    " 'SERVER_NAME' configured. Also configure"
+                    " 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed."
                 )
 
             # When outside a request, generate a URL with scheme and
@@ -1239,7 +1239,9 @@ class Flask(App):
                     )
                 except TypeError as e:
                     raise TypeError(
-                        f"{e}\nThe view function did not return a valid"
+                        f"{e}
+The view function did not return a valid" response. The return type must be a string, dict, list, tuple with headers or status, Response instance, or WSGI callable, but it f" was a {type(rv).__name__}.
+                    ).with_traceback(sys.exc_info()[2]) from None
                         " response. The return type must be a string,"
                         " dict, list, tuple with headers or status,"
                         " Response instance, or WSGI callable, but it"
@@ -1247,7 +1249,7 @@ class Flask(App):
                     ).with_traceback(sys.exc_info()[2]) from None
             else:
                 raise TypeError(
-                    "The view function did not return a valid"
+                    "The view function did not return a valid" 
                     " response. The return type must be a string,"
                     " dict, list, tuple with headers or status,"
                     " Response instance, or WSGI callable, but it was a"

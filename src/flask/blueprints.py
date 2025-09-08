@@ -48,8 +48,8 @@ class Blueprint(SansioBlueprint):
         #: been registered.
         self.cli = AppGroup()
 
-        # Set the name of the Click group in case someone wants to add
-        # the app's commands to another CLI tool.
+        # Set the name of the Click group in case someone wants to add the app's
+        # commands to another CLI tool.
         self.cli.name = self.name
 
     def get_send_file_max_age(self, filename: str | None) -> int | None:
@@ -92,7 +92,7 @@ class Blueprint(SansioBlueprint):
 
         """
         if not self.has_static_folder:
-            raise RuntimeError("'static_folder' must be set to serve static_files.")
+            raise RuntimeError("'static_folder' must be set to serve static files.")
 
         # send_file only knows to call get_send_file_max_age on the app,
         # call it here so it works for blueprints too.

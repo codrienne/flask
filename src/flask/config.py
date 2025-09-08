@@ -118,8 +118,7 @@ class Config(dict):  # type: ignore[type-arg]
             raise RuntimeError(
                 f"The environment variable {variable_name!r} is not set"
                 " and as such configuration could not be loaded. Set"
-                " this variable and make it point to a configuration"
-                " file"
+                " this variable and make it point to a configuration file."
             )
         return self.from_pyfile(rv, silent=silent)
 

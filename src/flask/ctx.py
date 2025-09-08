@@ -141,8 +141,7 @@ def after_this_request(
 
     if ctx is None:
         raise RuntimeError(
-            "'after_this_request' can only be used when a request"
-            " context is active, such as in a view function."
+            "'after_this_request' can only be used when a request context is active, such as in a view function."
         )
 
     ctx._after_request_functions.append(f)
@@ -180,8 +179,7 @@ def copy_current_request_context(f: F) -> F:
 
     if ctx is None:
         raise RuntimeError(
-            "'copy_current_request_context' can only be used when a"
-            " request context is active, such as in a view function."
+            "'copy_current_request_context' can only be used when a request context is active, such as in a view function."
         )
 
     ctx = ctx.copy()

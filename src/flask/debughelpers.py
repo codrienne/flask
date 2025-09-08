@@ -38,8 +38,8 @@ class DebugFilesKeyError(KeyError, AssertionError):
         if form_matches:
             names = ", ".join(repr(x) for x in form_matches)
             buf.append(
-                "\n\nThe browser instead transmitted some file names. "
-                f"This was submitted: {names}"
+                "\n\nThe browser instead transmitted some file names."
+                f" This was submitted: {names}"
             )
         self.msg = "".join(buf)
 
@@ -64,15 +64,13 @@ class FormDataRoutingRedirect(AssertionError):
 
         if f"{request.base_url}/" == exc.new_url.partition("?")[0]:
             buf.append(
-                " The URL was defined with a trailing slash. Flask"
-                " will redirect to the URL with a trailing slash if it"
-                " was accessed without one."
+                " The URL was defined with a trailing slash. Flask will redirect"
+                " to the URL with a trailing slash if it was accessed without one."
             )
 
         buf.append(
-            " Send requests to the canonical URL, or use 307 or 308 for"
-            " routing redirects. Otherwise, browsers will drop form"
-            " data.\n\n"
+            " Send requests to the canonical URL, or use 307 or 308 for"\
+            " routing redirects. Otherwise, browsers will drop form data.\n\n"
             "This exception is only raised in debug mode."
         )
         super().__init__("".join(buf))

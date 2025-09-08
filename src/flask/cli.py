@@ -58,9 +58,8 @@ def find_best_app(module: ModuleType) -> Flask:
         return matches[0]
     elif len(matches) > 1:
         raise NoAppException(
-            "Detected multiple Flask applications in module"
-            f" '{module.__name__}'. Use '{module.__name__}:name'"
-            " to specify the correct one."
+            f"Detected multiple Flask applications in module '{module.__name__}'."
+            f" Use '{module.__name__}:name' to specify the correct one."
         )
 
     # Search for app factory functions.
@@ -80,14 +79,12 @@ def find_best_app(module: ModuleType) -> Flask:
                 raise NoAppException(
                     f"Detected factory '{attr_name}' in module '{module.__name__}',"
                     " but could not call it without arguments. Use"
-                    f" '{module.__name__}:{attr_name}(args)'"
-                    " to specify arguments."
+                    f" '{module.__name__}:{attr_name}(args)' to specify arguments."
                 ) from e
 
     raise NoAppException(
         "Failed to find Flask application or factory in module"
-        f" '{module.__name__}'. Use '{module.__name__}:name'"
-        " to specify one."
+        f" '{module.__name__}'. Use '{module.__name__}:name' to specify one."
     )
 
 
@@ -182,8 +179,7 @@ def find_app_by_string(module: ModuleType, app_name: str) -> Flask:
 
             raise NoAppException(
                 f"The factory {app_name!r} in module"
-                f" {module.__name__!r} could not be called with the"
-                " specified arguments."
+                f" {module.__name__!r} could not be called with the specified arguments."
             ) from e
     else:
         app = attr
@@ -358,9 +354,8 @@ class ScriptInfo:
         if app is None:
             raise NoAppException(
                 "Could not locate a Flask application. Use the"
-                " 'flask --app' option, 'FLASK_APP' environment"
-                " variable, or a 'wsgi.py' or 'app.py' file in the"
-                " current directory."
+                " 'flask --app' option, 'FLASK_APP' environment variable, or a"
+                " 'wsgi.py' or 'app.py' file in the current directory."
             )
 
         if self.set_debug_flag:
@@ -456,8 +451,8 @@ _app_option = click.Option(
     help=(
         "The Flask application or factory function to load, in the form 'module:name'."
         " Module can be a dotted import or file path. Name is not required if it is"
-        " 'app', 'application', 'create_app', or 'make_app', and can be 'name(args)' to"
-        " pass arguments."
+        " 'app', 'application', 'create_app', or 'make_app', and can be 'name(args)'"
+        " to pass arguments."
     ),
     is_eager=True,
     expose_value=False,
@@ -734,8 +729,7 @@ def load_dotenv(
     except ImportError:
         if path or os.path.isfile(".env") or os.path.isfile(".flaskenv"):
             click.secho(
-                " * Tip: There are .env files present. Install python-dotenv"
-                " to use them.",
+                " * Tip: There are .env files present. Install python-dotenv to use them.",
                 fg="yellow",
                 err=True,
             )
@@ -898,14 +892,12 @@ class SeparatedPathType(click.Path):
 @click.option(
     "--reload/--no-reload",
     default=None,
-    help="Enable or disable the reloader. By default the reloader "
-    "is active if debug is enabled.",
+    help="Enable or disable the reloader. By default the reloader is active if debug is enabled.",
 )
 @click.option(
     "--debugger/--no-debugger",
     default=None,
-    help="Enable or disable the debugger. By default the debugger "
-    "is active if debug is enabled.",
+    help="Enable or disable the debugger. By default the debugger is active if debug is enabled.",
 )
 @click.option(
     "--with-threads/--without-threads",
