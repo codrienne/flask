@@ -162,7 +162,7 @@ steps:
         4. Apply these improvements:
             - Refactor for elegance and maintainability.
             - Enforce the Google Python Style Guide in https://google.github.io/styleguide/pyguide.html
-            - Modernize deprecated packages/APIs (check 'go.mod').
+            - Modernize deprecated Python packages/APIs 
         5. If you make improvements, summarize your changes in '$${SUMMARY_FILE}'. If no changes are made, do not create this file." \
               --model=${_MODEL} \
               --approval-mode=yolo
