@@ -287,12 +287,10 @@ class SessionInterface:
 session_json_serializer = TaggedJSONSerializer()
 
 
-def _lazy_sha1(string: bytes = b"") -> t.Any:
-    """Don't access ``hashlib.sha1`` until runtime. FIPS builds may not include
-    SHA-1, in which case the import and use as a default would fail before the
-    developer can configure something else.
+def _lazy_sha256(string: bytes = b"") -> t.Any:
+    """Don't access ``hashlib.sha256`` until runtime.
     """
-    return hashlib.sha1(string)
+    return hashlib.sha256(string)
 
 
 class SecureCookieSessionInterface(SessionInterface):
@@ -304,7 +302,7 @@ class SecureCookieSessionInterface(SessionInterface):
     #: signing of cookie based sessions.
     salt = "cookie-session"
     #: the hash function to use for the signature.  The default is sha1
-    digest_method = staticmethod(_lazy_sha1)
+    digest_method = staticmethod(_lazy_sha256)
     #: the name of the itsdangerous supported key derivation.  The default
     #: is hmac.
     key_derivation = "hmac"
