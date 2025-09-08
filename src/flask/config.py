@@ -63,7 +63,7 @@ class Config(dict):  # type: ignore[type-arg]
     just before the call::
 
         DEBUG = True
-        SECRET_KEY = 'development key'
+        SECRET_KEY = 'REPLACE_WITH_SECRET_MANAGER_KEY'
         app.config.from_object(__name__)
 
     In both cases (loading from any Python file or loading from modules),
