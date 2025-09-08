@@ -247,9 +247,9 @@ steps:
 # --- Configuration ---
 
 # Use more CPU and disk to try make it faster
-# options:
-#   diskSizeGb: '300'
-#   machineType: 'E2_HIGHCPU_32'
+options:
+  diskSizeGb: '300'
+  machineType: 'E2_HIGHCPU_8'
 
 # Secrets to make available as environment variables for all steps.
 availableSecrets:
