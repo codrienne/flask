@@ -64,7 +64,7 @@ steps:
           # Create the Pull Request
           gh pr create \
             --repo "${_GITHUB_REPO_OWNER}/${_GITHUB_REPO_NAME}" \
-            --base "ed-multiagent" \
+            --base "${_BASE_BRANCH}" \
             --head "$${BRANCH_NAME}" \
             --title "$${COMMIT_MSG}" \
             --body "$${SUMMARY_BODY}"
@@ -121,7 +121,7 @@ steps:
           # Create the Pull Request
           gh pr create \
             --repo "${_GITHUB_REPO_OWNER}/${_GITHUB_REPO_NAME}" \
-            --base "ed-multiagent" \
+            --base "${_BASE_BRANCH}" \
             --head "$${BRANCH_NAME}" \
             --title "$${COMMIT_MSG}" \
             --body "$${SUMMARY_BODY}"
@@ -181,7 +181,7 @@ steps:
           # Create the Pull Request
           gh pr create \
             --repo "${_GITHUB_REPO_OWNER}/${_GITHUB_REPO_NAME}" \
-            --base "ed-multiagent" \
+            --base "${_BASE_BRANCH}" \
             --head "$${BRANCH_NAME}" \
             --title "$${COMMIT_MSG}" \
             --body "$${SUMMARY_BODY}"
@@ -239,7 +239,7 @@ steps:
           # Create the Pull Request
           gh pr create \
             --repo "${_GITHUB_REPO_OWNER}/${_GITHUB_REPO_NAME}" \
-            --base "ed-multiagent" \
+            --base "${_BASE_BRANCH}" \
             --head "$${BRANCH_NAME}" \
             --title "$${COMMIT_MSG}" \
             --body "$${SUMMARY_BODY}"
@@ -268,4 +268,5 @@ substitutions:
   _SECRET_NAME_GITHUB: 'ed-flask-github-pat'
   _GITHUB_REPO_OWNER: 'codrienne'
   _GITHUB_REPO_NAME: 'flask'
+  _BASE_BRANCH: 'ed-multiagent'
   _DIRECTORY: 'src/flask' # The directory for the agents to focus on.
