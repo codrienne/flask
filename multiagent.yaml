@@ -1,0 +1,324 @@
+# This Cloud Build file deploys 5 parallel AI agents to work on your codebase.
+# Each agent uses an isolated git worktree and a carefully crafted prompt
+# to securely analyze a specific subdirectory.
+
+steps:
+# --- Step 1: Configure Git for all subsequent steps ---
+- id: 'ConfigureGit'
+  name: 'gcr.io/cloud-builders/git'
+  entrypoint: 'bash'
+  args:
+  - '-c'
+  - |
+    set -ex
+    git config --global user.email "cloud-build-bot@google.com"
+    git config --global user.name "Cloud Build Bot"
+    echo "✅ Git configured globally."
+
+- id: 'BugHunterAgent'
+  name: 'gcr.io/$PROJECT_ID/gemini-cli-node20:latest'
+  waitFor: ['ConfigureGit']
+  secretEnv: ['GEMINI_API_KEY', 'GITHUB_PAT']
+  entrypoint: 'bash'
+  args:
+  - '-c'
+  - |
+    set -ex
+    # Configure GitHub CLI
+    echo "$$GITHUB_PAT" | gh auth login --with-token --hostname github.com
+    gh config set git_protocol https
+
+    # Agent-specific variables
+    AGENT_NAME="BugHunterAgent"
+    BRANCH_NAME="$${AGENT_NAME}-${BUILD_ID}"
+    WORKTREE_PATH="/workspace/$${BRANCH_NAME}"
+    SUMMARY_FILE="$${AGENT_NAME}-changes.md"
+    COMMIT_MSG="fix(ai): Automated bug fixes from $${AGENT_NAME} in ${_DIRECTORY}"
+
+    # Setup git worktree
+    git worktree add -b "$${BRANCH_NAME}" "$${WORKTREE_PATH}"
+    cd "$${WORKTREE_PATH}"
+
+    # Run the AI agent
+    gemini --debug --prompt "You are an autonomous bug-fixing agent in the /workspace directory.
+    Your task is to find and fix bugs (e.g., race conditions, null pointers) in the '${_DIRECTORY}' subdirectory.
+
+    Instructions:
+    1. Do not ask for permission; act immediately.
+    2. All file paths must be relative; do not use '..'.
+    3. Start by running 'ls -R ${_DIRECTORY}' to explore the files.
+    4. If you make a change to a file, try and update any corresponding tests.
+    5. If you fix any bugs, summarize your changes in a new file named '$${SUMMARY_FILE}'. If no changes are made, do not create this file." \
+          --model=${_MODEL} \
+          --approval-mode=yolo
+
+    # Check for changes and create a PR if needed
+    if [[ -n "$(git status --porcelain)" ]]; then
+      SUMMARY_BODY=$(cat "$${SUMMARY_FILE}")
+      git add .
+      git reset HEAD "$${SUMMARY_FILE}" # Unstage the summary file
+      git commit -m "$${COMMIT_MSG}"
+      git push https://$$GITHUB_PAT@github.com/${_GITHUB_REPO_OWNER}/${_GITHUB_REPO_NAME}.git "$${BRANCH_NAME}"
+
+      # Create the Pull Request
+      gh pr create \
+        --repo "${_GITHUB_REPO_OWNER}/${_GITHUB_REPO_NAME}" \
+        --base "${_BASE_BRANCH}" \
+        --head "$${BRANCH_NAME}" \
+        --title "$${COMMIT_MSG}" \
+        --body "$${SUMMARY_BODY}"
+    else
+      echo "$${AGENT_NAME} found no issues to fix in ${_DIRECTORY}."
+    fi
+
+- id: 'DocWriterAgent'
+  name: 'gcr.io/$PROJECT_ID/gemini-cli-node20:latest'
+  waitFor: ['ConfigureGit']
+  secretEnv: ['GEMINI_API_KEY', 'GITHUB_PAT']
+  entrypoint: 'bash'
+  args:
+  - '-c'
+  - |
+    set -ex
+    # Configure GitHub CLI
+    echo "$$GITHUB_PAT" | gh auth login --with-token --hostname github.com
+    gh config set git_protocol https
+
+    # Agent-specific variables
+    AGENT_NAME="DocWriterAgent"
+    BRANCH_NAME="$${AGENT_NAME}-${BUILD_ID}"
+    WORKTREE_PATH="/workspace/$${BRANCH_NAME}"
+    SUMMARY_FILE="$${AGENT_NAME}-changes.md"
+    COMMIT_MSG="docs(ai): Automated documentation updates from $${AGENT_NAME} in ${_DIRECTORY}"
+
+    # Setup git worktree
+    git worktree add -b "$${BRANCH_NAME}" "$${WORKTREE_PATH}"
+    cd "$${WORKTREE_PATH}"
+
+    # Run the AI agent
+    gemini --debug --prompt "You are an autonomous technical writer agent in the /workspace directory.
+    Your task is to improve documentation in the '${_DIRECTORY}' subdirectory.
+
+    Instructions:
+    1. Do not ask for permission; act immediately.
+    2. All file paths must be relative; do not use '..'.
+    3. Start with 'ls -R ${_DIRECTORY}' to find files.
+    4. Locate 'README.md'. If it exists, update it with purpose and examples. If not, create it.
+    5. If you modify any documentation, summarize your changes in '$${SUMMARY_FILE}'. If no changes are made, do not create this file." \
+          --model=${_MODEL} \
+          --approval-mode=yolo
+
+    # Check for changes and create a PR if needed
+    if [[ -n "$(git status --porcelain)" ]]; then
+      SUMMARY_BODY=$(cat "$${SUMMARY_FILE}")
+      git add .
+      git reset HEAD "$${SUMMARY_FILE}" # Unstage the summary file
+      git commit -m "$${COMMIT_MSG}"
+      git push https://$$GITHUB_PAT@github.com/${_GITHUB_REPO_OWNER}/${_GITHUB_REPO_NAME}.git "$${BRANCH_NAME}"
+
+      # Create the Pull Request
+      gh pr create \
+        --repo "${_GITHUB_REPO_OWNER}/${_GITHUB_REPO_NAME}" \
+        --base "${_BASE_BRANCH}" \
+        --head "$${BRANCH_NAME}" \
+        --title "$${COMMIT_MSG}" \
+        --body "$${SUMMARY_BODY}"
+    else
+      echo "$${AGENT_NAME} found no documentation to update in ${_DIRECTORY}."
+    fi
+
+- id: 'CodeQualityAgent'
+  name: 'gcr.io/$PROJECT_ID/gemini-cli-node20:latest'
+  waitFor: ['ConfigureGit']
+  secretEnv: ['GEMINI_API_KEY', 'GITHUB_PAT']
+  entrypoint: 'bash'
+  args:
+  - '-c'
+  - |
+    set -ex
+    # Configure GitHub CLI
+    echo "$$GITHUB_PAT" | gh auth login --with-token --hostname github.com
+    gh config set git_protocol https
+
+    # Agent-specific variables
+    AGENT_NAME="CodeQualityAgent"
+    BRANCH_NAME="$${AGENT_NAME}-${BUILD_ID}"
+    WORKTREE_PATH="/workspace/$${BRANCH_NAME}"
+    SUMMARY_FILE="$${AGENT_NAME}-changes.md"
+    COMMIT_MSG="refactor(ai): Apply automated code quality improvements in ${_DIRECTORY}"
+
+    # Setup git worktree
+    git worktree add -b "$${BRANCH_NAME}" "$${WORKTREE_PATH}"
+    cd "$${WORKTREE_PATH}"
+
+    # Run the AI agent
+    gemini --debug --prompt "You are an autonomous Go engineering agent in the /workspace directory.
+    Your task is to improve code quality in the '${_DIRECTORY}' subdirectory.
+
+    Instructions:
+    1. Do not ask for permission; act immediately.
+    2. All file paths must be relative; do not use '..'.
+    3. Start with 'ls -R ${_DIRECTORY}' to explore files.
+    4. Apply these improvements:
+        - Refactor for elegance and maintainability.
+        - Enforce the Google Go Style Guide.
+        - Modernize deprecated packages/APIs (check 'go.mod').
+    5. If you make improvements, summarize your changes in '$${SUMMARY_FILE}'. If no changes are made, do not create this file." \
+          --model=${_MODEL} \
+          --approval-mode=yolo
+
+    # Check for changes and create a PR if needed
+    if [[ -n "$(git status --porcelain)" ]]; then
+      SUMMARY_BODY=$(cat "$${SUMMARY_FILE}")
+      git add .
+      git reset HEAD "$${SUMMARY_FILE}" # Unstage the summary file
+      git commit -m "$${COMMIT_MSG}"
+      git push https://$$GITHUB_PAT@github.com/${_GITHUB_REPO_OWNER}/${_GITHUB_REPO_NAME}.git "$${BRANCH_NAME}"
+
+      # Create the Pull Request
+      gh pr create \
+        --repo "${_GITHUB_REPO_OWNER}/${_GITHUB_REPO_NAME}" \
+        --base "${_BASE_BRANCH}" \
+        --head "$${BRANCH_NAME}" \
+        --title "$${COMMIT_MSG}" \
+        --body "$${SUMMARY_BODY}"
+    else
+      echo "$${AGENT_NAME} found no improvements to make in ${_DIRECTORY}."
+    fi
+
+- id: 'SecurityAgent'
+  name: 'gcr.io/$PROJECT_ID/gemini-cli-node20:latest'
+  waitFor: ['ConfigureGit']
+  secretEnv: ['GEMINI_API_KEY', 'GITHUB_PAT']
+  entrypoint: 'bash'
+  args:
+  - '-c'
+  - |
+    set -ex
+    # Configure GitHub CLI
+    echo "$$GITHUB_PAT" | gh auth login --with-token --hostname github.com
+    gh config set git_protocol https
+
+    # Agent-specific variables
+    AGENT_NAME="SecurityAgent"
+    BRANCH_NAME="$${AGENT_NAME}-${BUILD_ID}"
+    WORKTREE_PATH="/workspace/$${BRANCH_NAME}"
+    SUMMARY_FILE="$${AGENT_NAME}-changes.md"
+    COMMIT_MSG="security(ai): Automated security fixes from $${AGENT_NAME} in ${_DIRECTORY}"
+
+    # Setup git worktree
+    git worktree add -b "$${BRANCH_NAME}" "$${WORKTREE_PATH}"
+    cd "$${WORKTREE_PATH}"
+
+    # Run the AI agent
+        gemini --debug --prompt "You are an autonomous security agent in the /workspace directory.
+        Your task is to find and fix vulnerabilities in the '${_DIRECTORY}' subdirectory.
+
+        Instructions:
+        1. Do not ask for permission; act immediately.
+        2. All file paths must be relative; do not use '..'.
+        3. Start with 'ls -R ${_DIRECTORY}' to explore files.
+        4. Find and fix vulnerabilities (e.g., hardcoded secrets, SQL injection, XSS).
+        5. Replace hardcoded credentials with the placeholder 'REPLACE_WITH_SECRET_MANAGER_KEY'.
+        6. If you fix any vulnerabilities, summarize your changes in '$${SUMMARY_FILE}'. If no changes are made, do not create this file." \
+              --model=${_MODEL} \
+              --approval-mode=yolo
+
+    # Check for changes and create a PR if needed
+    if [[ -n "$(git status --porcelain)" ]]; then
+      SUMMARY_BODY=$(cat "$${SUMMARY_FILE}")
+      git add .
+      git reset HEAD "$${SUMMARY_FILE}" # Unstage the summary file
+      git commit -m "$${COMMIT_MSG}"
+      git push https://$$GITHUB_PAT@github.com/${_GITHUB_REPO_OWNER}/${_GITHUB_REPO_NAME}.git "$${BRANCH_NAME}"
+
+      # Create the Pull Request
+      gh pr create \
+        --repo "${_GITHUB_REPO_OWNER}/${_GITHUB_REPO_NAME}" \
+        --base "${_BASE_BRANCH}" \
+        --head "$${BRANCH_NAME}" \
+        --title "$${COMMIT_MSG}" \
+        --body "$${SUMMARY_BODY}"
+    else
+      echo "$${AGENT_NAME} found no security issues in ${_DIRECTORY}."
+    fi
+
+# --- Configuration ---
+
+# Use more CPU to make it faster
+options:
+  machineType: 'E2_HIGHCPU_32'
+
+# Secrets to make available as environment variables for all steps.
+availableSecrets:
+  secretManager:
+  - versionName: projects/$PROJECT_ID/secrets/$_SECRET_NAME_GEMINI/versions/latest
+    env: 'GEMINI_API_KEY'
+  - versionName: projects/$PROJECT_ID/secrets/$_SECRET_NAME_GITHUB/versions/latest
+    env: 'GITHUB_PAT'
+
+# User-defined substitutions to pass variables into the build.
+substitutions:
+  _MODEL: 'gemini-2.5-pro' # 'gemini-1.5-flash-latest'
+  _SECRET_NAME_GEMINI: 'ed-gemini-argo-local-edrienne-key'
+  _SECRET_NAME_GITHUB: 'ed-flask-github-pat'
+  _GITHUB_REPO_OWNER: 'codrienne'
+  _GITHUB_REPO_NAME: 'flask'
+  _BASE_BRANCH: 'ed-multiagent'
+  _DIRECTORY: 'src/flask' # The directory for the agents to focus on.
+
+
+# ABANDONED AGENTS
+# - id: 'TestWriterAgent'
+#   name: 'gcr.io/argo-edrienne-test/gemini-cli-node20:latest'
+#   waitFor: ['ConfigureGit']
+#   secretEnv: ['GEMINI_API_KEY', 'GITHUB_PAT']
+#   entrypoint: 'bash'
+#   args:
+#   - '-c'
+#   - |
+#     set -ex
+#     # Configure GitHub CLI
+#     echo "$$GITHUB_PAT" | gh auth login --with-token --hostname github.com
+#     gh config set git_protocol https
+
+#     # Agent-specific variables
+#     AGENT_NAME="TestWriterAgent"
+#     BRANCH_NAME="$${AGENT_NAME}-${BUILD_ID}"
+#     WORKTREE_PATH="/workspace/$${BRANCH_NAME}"
+#     SUMMARY_FILE="$${AGENT_NAME}-changes.md"
+#     COMMIT_MSG="test(ai): Add new unit tests from $${AGENT_NAME} for ${_DIRECTORY}"
+
+#     # Setup git worktree
+#     git worktree add -b "$${BRANCH_NAME}" "$${WORKTREE_PATH}"
+#     cd "$${WORKTREE_PATH}"
+
+#     # Run the AI agent
+#     gemini --prompt "You are a senior software engineer in test. Your current working directory is '$${WORKTREE_PATH}'. Your goal is to increase test coverage for code in the '${_DIRECTORY}' subdirectory. \
+#       IMPORTANT: You are in a sandboxed environment. All file paths you access must be relative to your current directory and MUST NOT use '..' to access parent directories. \
+#       First, run 'ls -R ${_DIRECTORY}' to see the existing code and tests. Then, identify missing unit tests, write them, and ensure they pass. Only keep tests that pass. \
+#       Finally, summarize your work in a new file named $${SUMMARY_FILE}." \
+#       --model=${_MODEL} \
+#       --approval-mode=yolo
+
+#     go test ./$_DIRECTORY/...
+
+#     # Check for changes and create a PR if needed
+#     if [[ -n "$(git status --porcelain)" ]]; then
+#       SUMMARY_BODY=$(cat "$${SUMMARY_FILE}")
+#       git add .
+#       git reset HEAD "$${SUMMARY_FILE}" # Unstage the summary file
+#       git commit -m "$${COMMIT_MSG}"
+#       git push https://$$GITHUB_PAT@github.com/${_GITHUB_REPO_OWNER}/${_GITHUB_REPO_NAME}.git "$${BRANCH_NAME}"
+
+#       # Create the Pull Request
+#       gh pr create \
+#         --repo "${_GITHUB_REPO_OWNER}/${_GITHUB_REPO_NAME}" \
+#         --base "${_BASE_BRANCH}" \
+#         --head "$${BRANCH_NAME}" \
+#         --title "$${COMMIT_MSG}" \
+#         --body "$${SUMMARY_BODY}"
+#     else
+#       echo "$${AGENT_NAME} did not add any new tests in ${_DIRECTORY}."
+#     fi
+
